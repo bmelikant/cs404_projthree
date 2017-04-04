@@ -1,0 +1,19 @@
+Gavin:
+
+    Check for Win10 Enterprise
+    Check for IIS installed
+    Check for inactive users
+
+Alex:
+
+    Check for C:\ as NTFS
+    Check for passwords expire
+    Check for password history (24)
+
+Ben:
+
+    Check for SSDP & uPnP - stopped and disabled
+
+Zainab:
+
+    GUI Design
