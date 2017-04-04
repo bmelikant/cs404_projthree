@@ -1,13 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package cs404_projthree;
 
-/**
+/*
  *
- * @author BMMST12
+ *
+ * @author Ben Melikant, Zainab Alalshaikh, Alex Way, Gavin Spellmeyer
  */
 public class Win10STIGFrame extends javax.swing.JFrame {
 
