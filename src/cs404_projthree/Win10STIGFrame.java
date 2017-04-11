@@ -138,18 +138,54 @@ public class Win10STIGFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jt_ReportOutTable = new javax.swing.JTable();
+        jmb_MainMenuBar = new javax.swing.JMenuBar();
+        jm_FileMenu = new javax.swing.JMenu();
+        jmi_ExitItem = new javax.swing.JMenuItem();
+        jm_ReportMenu = new javax.swing.JMenu();
+        jmi_RunReportItem = new javax.swing.JMenuItem();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(600, 400));
+
+        jt_ReportOutTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Configuration", "Result"
+            }
+        ));
+        jt_ReportOutTable.setRequestFocusEnabled(false);
+        jScrollPane2.setViewportView(jt_ReportOutTable);
+
+        jm_FileMenu.setText("File");
+
+        jmi_ExitItem.setLabel("Exit");
+        jmi_ExitItem.setName(""); // NOI18N
+        jm_FileMenu.add(jmi_ExitItem);
+
+        jmb_MainMenuBar.add(jm_FileMenu);
+
+        jm_ReportMenu.setText("Report");
+
+        jmi_RunReportItem.setText("jMenuItem1");
+        jm_ReportMenu.add(jmi_RunReportItem);
+
+        jmb_MainMenuBar.add(jm_ReportMenu);
+
+        setJMenuBar(jmb_MainMenuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 600, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 360, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
         );
 
         pack();
@@ -191,5 +227,12 @@ public class Win10STIGFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JMenu jm_FileMenu;
+    private javax.swing.JMenu jm_ReportMenu;
+    private javax.swing.JMenuBar jmb_MainMenuBar;
+    private javax.swing.JMenuItem jmi_ExitItem;
+    private javax.swing.JMenuItem jmi_RunReportItem;
+    private javax.swing.JTable jt_ReportOutTable;
     // End of variables declaration//GEN-END:variables
 }
