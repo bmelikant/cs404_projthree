@@ -1,6 +1,7 @@
 package cs404_projthree;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 
 /*
@@ -26,7 +27,11 @@ public class Win10STIGFrame extends javax.swing.JFrame {
     private void checkStigRequirements () {
         
         if (checkForNTFS() == PASS)
-            JOptionPane.showMessageDialog(null, "Volume is formatted as NTFS");
+            System.out.println ("System volume formatted as NTFS");
+        if (checkServiceState ("SSDPSRV", "stopped") == PASS)
+            System.out.println ("SSDP Service is stopped");
+        if (checkServiceState ("UPNPHOST", "stopped") == PASS)
+            System.out.println ("uPnp Service is stopped");
     }
 
     // boolean checkForNTFS ()
@@ -37,13 +42,8 @@ public class Win10STIGFrame extends javax.swing.JFrame {
             
             byte [] result = executeCommand ("fsutil fsinfo volumeInfo C:");
             
-            if (result == null) {
-                
-                JOptionPane.showMessageDialog(null, "Command returned empty string", 
-                        "Error:", JOptionPane.ERROR_MESSAGE);
-                
-                return FAIL;
-            }
+            if (result == null)                
+                return INVALID;
             
             String cmdOutput = new String (result);
             int idx = cmdOutput.indexOf("File System Name : ");
@@ -60,27 +60,47 @@ public class Win10STIGFrame extends javax.swing.JFrame {
             }
             
             else
-                return FAIL;
+                return INVALID;
             
         } catch (IOException e) {
             
-            JOptionPane.showMessageDialog (null, "Error running command!", "Error!", JOptionPane.ERROR_MESSAGE);
+            return INVALID;
         }
-        
-        return FAIL;
     }
     
-    // boolean checkIfSSDPStopped (): Check to see if the SSDP service is stopped
-    private int checkIfSSDPStopped () {
+    // int checkServiceState (): See if the service state matches the requested state
+    // inputs: svc - name of service, state - state required
+    // returns: PASS, FAIL, INVALID
+    private int checkServiceState (String svc, String state) {
         
-        
-        return FAIL;
+        try {
+            
+            byte [] cmdResult = executeCommand ("sc query \"" + svc + "\"");
+            
+            if (cmdResult == null)
+                return INVALID;
+            
+            String cmdData = new String (cmdResult);
+            String [] cmdLines = cmdData.split("\r\n");
+            
+            // print each line of the service data (testing purposes)
+            for (String s : cmdLines) {
+                
+                if (s.contains ("STATE") && s.contains (state.toUpperCase()))
+                    return PASS;   
+            }
+            
+            return FAIL;
+            
+        } catch (IOException e) {
+            
+            return INVALID;
+        }
     }
     
-    // boolean checkIfSSDPDisabled (): Check to see if the SSDP service is disabled
-    // boolean checkIfUPNPDisabled (): Check to see if uPnP service is disabled
-    // boolean checkIfUPNPStopped (): Check to see if uPnP service is stopped
-    
+    // byte [] executeCommand (): Get the stdout data from a command
+    // inputs: cmd - command to run
+    // returns: stdout from the program, null if no output
     private byte [] executeCommand (String cmd) throws IOException {
         
         try {
