@@ -9,9 +9,9 @@ import javax.swing.JOptionPane;
 public class Win10STIGFrame extends javax.swing.JFrame {
 
     // 
-    public static final boolean PASS = true;
-    public static final boolean FAIL = false;
-    
+    public static final int PASS = 0;
+    public static final int FAIL = 1;
+    public static final int INVALID = 2;
     /*
      * Creates new form Win10STIGFrame
      */
@@ -31,7 +31,7 @@ public class Win10STIGFrame extends javax.swing.JFrame {
 
     // boolean checkForNTFS ()
     // inputs: none, returns: PASS OR FAIL
-    private boolean checkForNTFS () {
+    private int checkForNTFS () {
         
         try {
             
@@ -69,6 +69,17 @@ public class Win10STIGFrame extends javax.swing.JFrame {
         
         return FAIL;
     }
+    
+    // boolean checkIfSSDPStopped (): Check to see if the SSDP service is stopped
+    private int checkIfSSDPStopped () {
+        
+        
+        return FAIL;
+    }
+    
+    // boolean checkIfSSDPDisabled (): Check to see if the SSDP service is disabled
+    // boolean checkIfUPNPDisabled (): Check to see if uPnP service is disabled
+    // boolean checkIfUPNPStopped (): Check to see if uPnP service is stopped
     
     private byte [] executeCommand (String cmd) throws IOException {
         
