@@ -1,19 +1,103 @@
 package cs404_projthree;
 
+import java.io.IOException;
+import javax.swing.JOptionPane;
+
 /*
- *
- *
  * @author Ben Melikant, Zainab Alalshaikh, Alex Way, Gavin Spellmeyer
  */
 public class Win10STIGFrame extends javax.swing.JFrame {
 
-    /**
+    // 
+    public static final boolean PASS = true;
+    public static final boolean FAIL = false;
+    
+    /*
      * Creates new form Win10STIGFrame
      */
     public Win10STIGFrame() {
         initComponents();
+        checkStigRequirements ();
+    }
+    
+    // void checkStigRequirements (): Check to see whether the system meets all STIG guidelines
+    // inputs: None
+    // returns: none
+    private void checkStigRequirements () {
+        
+        if (checkForNTFS() == PASS)
+            JOptionPane.showMessageDialog(null, "Volume is formatted as NTFS");
     }
 
+    // boolean checkForNTFS ()
+    // inputs: none, returns: PASS OR FAIL
+    private boolean checkForNTFS () {
+        
+        try {
+            
+            byte [] result = executeCommand ("fsutil fsinfo volumeInfo C:");
+            
+            if (result == null) {
+                
+                JOptionPane.showMessageDialog(null, "Command returned empty string", 
+                        "Error:", JOptionPane.ERROR_MESSAGE);
+                
+                return FAIL;
+            }
+            
+            String cmdOutput = new String (result);
+            int idx = cmdOutput.indexOf("File System Name : ");
+            
+            if (idx >= 0) {
+                
+                String dataLine = cmdOutput.substring(idx+"File System Name : ".length(),
+                        cmdOutput.indexOf("\n", idx+"File System Name : ".length())).trim();
+                
+                if (dataLine.equals ("NTFS"))
+                    return PASS;
+                else
+                    return FAIL;
+            }
+            
+            else
+                return FAIL;
+            
+        } catch (IOException e) {
+            
+            JOptionPane.showMessageDialog (null, "Error running command!", "Error!", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        return FAIL;
+    }
+    
+    private byte [] executeCommand (String cmd) throws IOException {
+        
+        try {
+        
+            // fsutil fsinfo volumeInfo C:
+            Process p = Runtime.getRuntime().exec (cmd);
+            p.waitFor ();
+       
+            if (p.exitValue () > 0)    
+                return null;
+            
+            byte [] pstdin = new byte [p.getInputStream().available()];
+            byte [] pstderr = new byte [p.getErrorStream().available()];
+            
+            p.getInputStream().read(pstdin);
+            p.getErrorStream().read(pstderr);
+            
+            return pstdin;
+        
+        } catch (InterruptedException e) {
+         
+            JOptionPane.showMessageDialog (null, "Interrupted while waiting for process: " + e.toString(),
+                    "Error:", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        return null;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
