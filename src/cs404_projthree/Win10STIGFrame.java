@@ -147,7 +147,6 @@ public class Win10STIGFrame extends javax.swing.JFrame {
         jmi_RunReportItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(600, 400));
 
         jt_ReportOutTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -164,13 +163,18 @@ public class Win10STIGFrame extends javax.swing.JFrame {
 
         jmi_ExitItem.setLabel("Exit");
         jmi_ExitItem.setName(""); // NOI18N
+        jmi_ExitItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jmi_ExitItemActionPerformed(evt);
+            }
+        });
         jm_FileMenu.add(jmi_ExitItem);
 
         jmb_MainMenuBar.add(jm_FileMenu);
 
         jm_ReportMenu.setText("Report");
 
-        jmi_RunReportItem.setText("jMenuItem1");
+        jmi_RunReportItem.setText("Run Report");
         jm_ReportMenu.add(jmi_RunReportItem);
 
         jmb_MainMenuBar.add(jm_ReportMenu);
@@ -190,6 +194,11 @@ public class Win10STIGFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jmi_ExitItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jmi_ExitItemActionPerformed
+        
+        System.exit (0);
+    }//GEN-LAST:event_jmi_ExitItemActionPerformed
 
     /**
      * @param args the command line arguments
