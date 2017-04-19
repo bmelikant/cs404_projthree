@@ -1,6 +1,8 @@
 package cs404_projthree;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 
@@ -32,8 +34,96 @@ public class Win10STIGFrame extends javax.swing.JFrame {
             System.out.println ("SSDP Service is stopped");
         if (checkServiceState ("UPNPHOST", "stopped") == PASS)
             System.out.println ("uPnp Service is stopped");
+        if (checkForWindowsVer() == PASS)
+            System.out.println ("Windows Version is Windows Enterprise");
+        if (checkForIISInstall() == PASS)
+            System.out.println ("IIS is not installed");
+        if (checkForInactive() == PASS)
+            System.out.println ("There are no inactive Users");
+    }
+    
+        //Checks for the windows OS name
+    //Must run Windows Enterprise
+    private int checkForWindowsVer () {
+        try {
+            
+            byte [] result = executeCommand ("systeminfo");
+            
+            if (result == null)
+                return INVALID;
+           
+            String cmdOutput = new String (result);
+            
+            if (cmdOutput.contains ("Windows 10 Enterprise"))
+                return PASS;
+            else
+                return FAIL;
+            
+        } catch (IOException w) {
+            
+            return INVALID;
+        }
     }
 
+       //Not completed, must find working information on working execution
+    private int checkForIISInstall(){
+        
+        try {
+            
+            byte [] result = executeCommand ("net start w3svc");
+            
+            if (result == null)                
+                return INVALID;
+            
+            String cmdOutput = new String (result);
+            int idx = cmdOutput.indexOf("");
+            
+            if (cmdOutput.contains ("service name is invalid"))
+                return PASS;
+            else
+                return FAIL;
+            
+        } catch (IOException e) {
+            
+            return INVALID;
+        }
+    }
+    
+    //use powershell
+    //WN10-00-000065 on the STIG Document
+    private int checkForInactive(){
+        
+        try {
+        
+            int status = PASS;
+            
+            Process p = Runtime.getRuntime().exec ("powershell C:\\Users\\Ben\\Documents\\NetBeansProjects\\cs404_projthree\\users.ps1");
+            BufferedReader rdr = new BufferedReader (new InputStreamReader (p.getInputStream()));
+            
+            String line;
+            while ((line = rdr.readLine ()) != null) {
+            
+                // if the line says "True" the account is active
+                if (line.contains ("True")) {
+                    
+                    
+                }
+                
+                System.out.println (line);
+            }
+            
+            rdr.close ();
+            p.getOutputStream().close ();
+            
+            return status;
+            
+        } catch (IOException e) {
+            
+            System.out.println ("Error executing command: " + e.toString ());
+            return INVALID;
+        }
+    }
+    
     // boolean checkForNTFS ()
     // inputs: none, returns: PASS OR FAIL
     private int checkForNTFS () {
