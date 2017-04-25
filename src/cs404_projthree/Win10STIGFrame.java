@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.regex.Pattern;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -39,43 +41,76 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
 
         // set the text for the status bar
         this.jmi_RunReportItem.setEnabled(false);
-        jl_StatusBarLabel.setText ("Running STIG checks..");
+        jl_StatusBarLabel.setText ("Running STIG checks");
         
         // build the table data model
         DefaultTableModel tm = new DefaultTableModel (null, new Object [] { "Configuration", "Result" });
         
-        // check for NTFS format of C:
+        jl_StatusBarLabel.setText ("Running STIG checks (checking filesystem type)");
+        // check for NTFS on C:
         int result = checkForNTFS ();
-        tm.addRow (new Object [] { "C:\\ formatted as NTFS", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        if (result == PASS)
+            tm.addRow (new Object [] { "C:\\ formatted as NTFS", "SUCCESS" });
+        else if (result == FAIL)
+            tm.addRow (new Object [] { "C:\\ formatted as NTFS", "FAILURE" });
+        else if (result == INVALID)
+            tm.addRow (new Object [] { "C:\\ formatted as NTFS", "INVALID COMMAND" });
         
-        result = checkServiceState ("SSDPSRV", "stopped");
-        tm.addRow (new Object [] { "SSDP service is stopped", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
-    
-        result = checkServiceState ("SSDPSRV", "disabled");
-        tm.addRow (new Object [] { "SSDP service is disabled", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        jl_StatusBarLabel.setText ("Running STIG checks (checking SSDP service)");
+        int result_stopped = checkServiceState ("SSDPSRV", "stopped");
+        int result_disabled = checkServiceState ("SSDPSRV", "disabled");
         
-        result = checkServiceState ("UPNPHOST", "stopped");
-        tm.addRow (new Object [] { "uPnP service is stopped", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        if (result_stopped == PASS || result_disabled == PASS)
+            tm.addRow (new Object [] { "SSDP service is stopped", "SUCCESS" });
+        else if (result_stopped == FAIL)
+            tm.addRow (new Object [] { "SSDP service is stopped", "FAILURE" });
+        else if (result_stopped == INVALID)
+            tm.addRow (new Object [] { "SSDP service is stopped", "INVALID COMMAND" });
         
-        result = checkServiceState ("UPNPHOST", "disabled");
-        tm.addRow (new Object [] { "uPnp service is disabled", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        if (result_disabled == PASS)
+            tm.addRow (new Object [] { "SSDP service is disabled", "SUCCESS" });
+        else if (result_disabled == FAIL)
+             tm.addRow (new Object [] { "SSDP service is disabled", "FAILURE" });
+        else if (result_disabled == INVALID)
+             tm.addRow (new Object [] { "SSDP service is disabled", "INVALID COMMAND" });
         
+        jl_StatusBarLabel.setText ("Running STIG checks (checking uPnP host service)");
+        result_stopped = checkServiceState ("UPNPHOST", "stopped");
+        result_disabled = checkServiceState ("UPNPHOST", "disabled");
+        
+        if (result_stopped == PASS || result_disabled == PASS)
+            tm.addRow (new Object [] { "uPnP service is stopped", "SUCCESS" });
+        else if (result_stopped == FAIL)
+            tm.addRow (new Object [] { "uPnP service is stopped", "FAILURE" });
+        else if (result_stopped == INVALID)
+            tm.addRow (new Object [] { "uPnP service is stopped", "INVALID COMMAND" });
+        
+        if (result_disabled == PASS)
+            tm.addRow (new Object [] { "uPnP service is disabled", "SUCCESS" });
+        else if (result_disabled == FAIL)
+             tm.addRow (new Object [] { "uPnP service is disabled", "FAILURE" });
+        else if (result_disabled == INVALID)
+             tm.addRow (new Object [] { "uPnP service is disabled", "INVALID COMMAND" });
+        
+        jl_StatusBarLabel.setText ("Running STIG checks (checking Windows 10 version)");
         result = checkForWindowsVer ();
-        tm.addRow (new Object [] { "Windows Version is Win10 Enterprise", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        tm.addRow (new Object [] { "Windows Version is Win10 Enterprise", ((result == PASS) ? "SUCCESS" : ((result == FAIL) ? "FAILURE" : "INVALID COMMAND"))});
         
+        jl_StatusBarLabel.setText ("Running STIG checks (checking if IIS is installed)");
         result = checkForIISInstall ();
-        tm.addRow (new Object [] { "IIS is NOT installed", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        tm.addRow (new Object [] { "IIS is NOT installed", ((result == PASS) ? "SUCCESS" : ((result == FAIL) ? "FAILURE" : "INVALID COMMAND"))});
         
+        jl_StatusBarLabel.setText ("Running STIG checks (checking for expired / inactive user accounts)");
         result = checkForInactive ();
-        tm.addRow (new Object [] { "No inactive user accounts", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
-        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        tm.addRow (new Object [] { "No inactive user accounts", ((result == PASS) ? "SUCCESS" : ((result == FAIL) ? "FAILURE" : "INVALID COMMAND"))});
+        
+        jl_StatusBarLabel.setText ("Running STIG checks (checking for password expiry parameter)");
+        result = checkPasswordExpiry ();
+        tm.addRow (new Object [] { "Passwords must expire", ((result == PASS) ? "SUCCESS" : ((result == FAIL) ? "FAILURE" : "INVALID COMMAND"))});
+        
+        jl_StatusBarLabel.setText ("Running STIG checks (checking for password history length)");
+        result = checkPasswordHistory();
+        tm.addRow (new Object [] { "Password history is 24", ((result == PASS) ? "SUCCESS" : ((result == FAIL) ? "FAILURE" : "INVALID COMMAND"))});
         
         this.jt_ReportOutTable.setModel (tm);
         this.jmi_RunReportItem.setEnabled(true);
@@ -112,9 +147,6 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
             
             byte [] result = executeCommand ("net start w3svc");
             
-            if (result == null)                
-                return PASS;
-            
             String cmdOutput = new String (result);
             int idx = cmdOutput.indexOf("");
             
@@ -138,7 +170,16 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
         
             int status = PASS;
             
-            Process p = Runtime.getRuntime().exec ("powershell C:\\Users\\Ben\\Documents\\NetBeansProjects\\cs404_projthree\\users.ps1");
+            Process p = Runtime.getRuntime().exec ("powershell -command \"([ADSI]('WinNT://{0}' -f $env:COMPUTERNAME)).Children | Where { $_.SchemaClassName -eq 'user' } | ForEach {"
+                    + "$user = ([ADSI]$_.Path);"
+                    + "$lastLogin = $user.Properties.LastLogin.Value;"
+                    + "$enabled = ($user.Properties.UserFlags.Value -band 0x2) -ne 0x2;"
+                    + "if ($lastLogin -eq $null) {"
+                    + "$lastLogin = 'Never';"
+                    + "}"
+                    + "Write-Host $user.Name $lastLogin $enabled;"
+                    + "}\"");
+            
             BufferedReader rdr = new BufferedReader (new InputStreamReader (p.getInputStream()));
             
             String line;
@@ -147,10 +188,24 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
                 // if the line says "True" the account is active
                 if (line.contains ("True")) {
                     
+                    if (line.contains ("Never"))
+                        return FAIL;
                     
+                    String [] fields = line.split (" ");
+                    String [] datevals = fields[1].split ("/");
+                    
+                    int month = Integer.parseInt(datevals[0]);
+                    int day = Integer.parseInt (datevals[1]);
+                    int year = Integer.parseInt (datevals[2]);
+                    
+                    LocalDate lastLogin = LocalDate.of (month, day, year);
+                    LocalDate now = LocalDate.now ();
+                    
+                    System.out.println (now.compareTo (lastLogin));
+                    
+                    if (now.compareTo (lastLogin) > 35)
+                        return FAIL;
                 }
-                
-                System.out.println (line);
             }
             
             rdr.close ();
@@ -225,6 +280,73 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
             
         } catch (IOException e) {
             
+            return INVALID;
+        }
+    }
+       // int checkPasswordExpiry (): See if any of the user accounts have passwords that do not expire
+    // inputs: user - name of the user you wish to examine
+    // returns: PASS, FAIL, INVALID
+    // NEEDS TESTING
+    private int checkPasswordExpiry ()
+    {
+        try
+        {
+            byte [] result = executeCommand ("net accounts");
+            
+            if (result == null)
+                return INVALID;
+            
+            String cmdData = new String (result);
+            String [] cmdLines = cmdData.split("\r\n");
+            
+            // Prints each line of command output into Java output
+            for (String s : cmdLines)
+            {
+                System.out.println (s);
+                
+                if(s.contains("Maximum password age") && s.contains ("Unlimited"))
+                    return FAIL;
+            }
+            
+            return PASS;
+        }
+        
+        catch (IOException e)
+        {
+            return INVALID;
+        }
+    }
+    
+    // int checkPasswordHistory (): See how many previously-entered passwords the machine saves at one time
+    // inputs: None
+    // returns: PASS, FAIL, INVALID
+    // NEEDS TESTING
+    private int checkPasswordHistory ()
+    {
+        try
+        {
+            byte [] result = executeCommand ("net accounts");
+            
+            if(result == null)
+            {
+                return INVALID;
+            }
+            
+            // Prints each line of command output into Java output
+            String cmdData = new String (result);
+            String [] cmdLines = cmdData.split("\r\n");
+            
+            for(String s : cmdLines)
+            {
+                if(s.contains("Length of password history maintained") && s.contains("24"))
+                    return PASS;
+            }
+            
+            return FAIL;
+        }
+        
+        catch (IOException e)
+        {
             return INVALID;
         }
     }
@@ -364,7 +486,7 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
     private void jmi_ExitItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jmi_ExitItemActionPerformed
         
         // check if the thread is running
-        if (t.isAlive()) {
+        if (t != null && t.isAlive()) {
             
             try {
             
@@ -387,7 +509,7 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         
-        if (t.isAlive()) {
+        if (t != null && t.isAlive()) {
             
             try {
             
@@ -448,8 +570,5 @@ public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void run() {
-        
-        checkStigRequirements ();
-    }
+    public void run() { checkStigRequirements (); }
 }
