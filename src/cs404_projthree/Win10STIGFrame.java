@@ -1,48 +1,88 @@
 package cs404_projthree;
 
+import java.awt.BorderLayout;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.regex.Pattern;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /*
  * @author Ben Melikant, Zainab Alalshaikh, Alex Way, Gavin Spellmeyer
  */
-public class Win10STIGFrame extends javax.swing.JFrame {
+public class Win10STIGFrame extends javax.swing.JFrame implements Runnable {
 
     // 
     public static final int PASS = 0;
     public static final int FAIL = 1;
     public static final int INVALID = 2;
+    
+    // thread item (destroy on close!)
+    Thread t;
+    
     /*
      * Creates new form Win10STIGFrame
      */
     public Win10STIGFrame() {
         initComponents();
-        checkStigRequirements ();
     }
     
     // void checkStigRequirements (): Check to see whether the system meets all STIG guidelines
     // inputs: None
     // returns: none
     private void checkStigRequirements () {
+
+        // set the text for the status bar
+        this.jmi_RunReportItem.setEnabled(false);
+        jl_StatusBarLabel.setText ("Running STIG checks..");
         
-        if (checkForNTFS() == PASS)
-            System.out.println ("System volume formatted as NTFS");
-        if (checkServiceState ("SSDPSRV", "stopped") == PASS)
-            System.out.println ("SSDP Service is stopped");
-        if (checkServiceState ("UPNPHOST", "stopped") == PASS)
-            System.out.println ("uPnp Service is stopped");
-        if (checkForWindowsVer() == PASS)
-            System.out.println ("Windows Version is Windows Enterprise");
-        if (checkForIISInstall() == PASS)
-            System.out.println ("IIS is not installed");
-        if (checkForInactive() == PASS)
-            System.out.println ("There are no inactive Users");
+        // build the table data model
+        DefaultTableModel tm = new DefaultTableModel (null, new Object [] { "Configuration", "Result" });
+        
+        // check for NTFS format of C:
+        int result = checkForNTFS ();
+        tm.addRow (new Object [] { "C:\\ formatted as NTFS", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        
+        result = checkServiceState ("SSDPSRV", "stopped");
+        tm.addRow (new Object [] { "SSDP service is stopped", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+    
+        result = checkServiceState ("SSDPSRV", "disabled");
+        tm.addRow (new Object [] { "SSDP service is disabled", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        
+        result = checkServiceState ("UPNPHOST", "stopped");
+        tm.addRow (new Object [] { "uPnP service is stopped", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        
+        result = checkServiceState ("UPNPHOST", "disabled");
+        tm.addRow (new Object [] { "uPnp service is disabled", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        
+        result = checkForWindowsVer ();
+        tm.addRow (new Object [] { "Windows Version is Win10 Enterprise", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        
+        result = checkForIISInstall ();
+        tm.addRow (new Object [] { "IIS is NOT installed", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        
+        result = checkForInactive ();
+        tm.addRow (new Object [] { "No inactive user accounts", ((result == PASS) ? "PASS" : ((result == FAIL) ? "FAIL" : "INVALID CMD"))});
+        jl_StatusBarLabel.setText (jl_StatusBarLabel.getText() + ".");
+        
+        this.jt_ReportOutTable.setModel (tm);
+        this.jmi_RunReportItem.setEnabled(true);
+        jl_StatusBarLabel.setText ("Done running STIG checks!");
     }
     
-        //Checks for the windows OS name
+    //Checks for the windows OS name
     //Must run Windows Enterprise
     private int checkForWindowsVer () {
         try {
@@ -73,7 +113,7 @@ public class Win10STIGFrame extends javax.swing.JFrame {
             byte [] result = executeCommand ("net start w3svc");
             
             if (result == null)                
-                return INVALID;
+                return PASS;
             
             String cmdOutput = new String (result);
             int idx = cmdOutput.indexOf("");
@@ -85,6 +125,7 @@ public class Win10STIGFrame extends javax.swing.JFrame {
             
         } catch (IOException e) {
             
+            System.err.println ("Service check error: " + e.toString ());
             return INVALID;
         }
     }
@@ -198,9 +239,6 @@ public class Win10STIGFrame extends javax.swing.JFrame {
             // fsutil fsinfo volumeInfo C:
             Process p = Runtime.getRuntime().exec (cmd);
             p.waitFor ();
-       
-            if (p.exitValue () > 0)    
-                return null;
             
             byte [] pstdin = new byte [p.getInputStream().available()];
             byte [] pstderr = new byte [p.getErrorStream().available()];
@@ -208,7 +246,10 @@ public class Win10STIGFrame extends javax.swing.JFrame {
             p.getInputStream().read(pstdin);
             p.getErrorStream().read(pstderr);
             
-            return pstdin;
+            if (p.exitValue () > 0)
+                return pstderr;
+            else
+                return pstdin;
         
         } catch (InterruptedException e) {
          
@@ -230,6 +271,8 @@ public class Win10STIGFrame extends javax.swing.JFrame {
 
         jScrollPane2 = new javax.swing.JScrollPane();
         jt_ReportOutTable = new javax.swing.JTable();
+        jp_StatusBarPanel = new javax.swing.JPanel();
+        jl_StatusBarLabel = new javax.swing.JLabel();
         jmb_MainMenuBar = new javax.swing.JMenuBar();
         jm_FileMenu = new javax.swing.JMenu();
         jmi_ExitItem = new javax.swing.JMenuItem();
@@ -237,6 +280,11 @@ public class Win10STIGFrame extends javax.swing.JFrame {
         jmi_RunReportItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         jt_ReportOutTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -248,6 +296,20 @@ public class Win10STIGFrame extends javax.swing.JFrame {
         ));
         jt_ReportOutTable.setRequestFocusEnabled(false);
         jScrollPane2.setViewportView(jt_ReportOutTable);
+
+        javax.swing.GroupLayout jp_StatusBarPanelLayout = new javax.swing.GroupLayout(jp_StatusBarPanel);
+        jp_StatusBarPanel.setLayout(jp_StatusBarPanelLayout);
+        jp_StatusBarPanelLayout.setHorizontalGroup(
+            jp_StatusBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jp_StatusBarPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jl_StatusBarLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 412, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jp_StatusBarPanelLayout.setVerticalGroup(
+            jp_StatusBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jl_StatusBarLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
+        );
 
         jm_FileMenu.setText("File");
 
@@ -265,6 +327,11 @@ public class Win10STIGFrame extends javax.swing.JFrame {
         jm_ReportMenu.setText("Report");
 
         jmi_RunReportItem.setText("Run Report");
+        jmi_RunReportItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jmi_RunReportItemActionPerformed(evt);
+            }
+        });
         jm_ReportMenu.add(jmi_RunReportItem);
 
         jmb_MainMenuBar.add(jm_ReportMenu);
@@ -275,11 +342,20 @@ public class Win10STIGFrame extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 580, Short.MAX_VALUE)
+                    .addComponent(jp_StatusBarPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 352, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jp_StatusBarPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         pack();
@@ -287,8 +363,42 @@ public class Win10STIGFrame extends javax.swing.JFrame {
 
     private void jmi_ExitItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jmi_ExitItemActionPerformed
         
+        // check if the thread is running
+        if (t.isAlive()) {
+            
+            try {
+            
+                t.join();
+            
+            } catch (InterruptedException e) {
+            
+                System.err.println ("Thread interrupted: " + e.toString());
+            }
+        }
         System.exit (0);
     }//GEN-LAST:event_jmi_ExitItemActionPerformed
+
+    private void jmi_RunReportItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jmi_RunReportItemActionPerformed
+        
+        // run the checks in a thread!
+        t = new Thread(this);
+        t.start();
+    }//GEN-LAST:event_jmi_RunReportItemActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        
+        if (t.isAlive()) {
+            
+            try {
+            
+                t.join();
+            
+            } catch (InterruptedException e) {
+            
+                System.err.println ("Thread interrupted: " + e.toString());
+            }
+        }
+    }//GEN-LAST:event_formWindowClosing
 
     /**
      * @param args the command line arguments
@@ -327,11 +437,19 @@ public class Win10STIGFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel jl_StatusBarLabel;
     private javax.swing.JMenu jm_FileMenu;
     private javax.swing.JMenu jm_ReportMenu;
     private javax.swing.JMenuBar jmb_MainMenuBar;
     private javax.swing.JMenuItem jmi_ExitItem;
     private javax.swing.JMenuItem jmi_RunReportItem;
+    private javax.swing.JPanel jp_StatusBarPanel;
     private javax.swing.JTable jt_ReportOutTable;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void run() {
+        
+        checkStigRequirements ();
+    }
 }
